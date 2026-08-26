@@ -1,6 +1,0 @@
-{
-  "name": "Vokabeln - Spanisch Lernapp",
-  "description": "Spanisch Vokabeltrainer mit 7.000 Vokabeln (A1–C1), Spaced Repetition Algorithmus, 5-Stufen-System, Audio-Aussprache und nativer Swift iOS App.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
