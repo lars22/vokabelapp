@@ -11,6 +11,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Vokabeln">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -107,9 +108,22 @@
         }
         .offline-banner.active { transform: translateY(0); }
 
-        .stats-row { display: flex; gap: 10px; margin-bottom: 14px; }
-        .level-bar { display: flex; gap: 4px; height: 8px; border-radius: 999px; overflow: hidden; margin-bottom: 20px; background: var(--bg-card); }
-        .level-bar-seg { height: 100%; transition: flex-grow 0.3s ease; }
+        .stats-row { display: flex; gap: 10px; margin-bottom: 20px; }
+        .level-stats {
+            display: flex; gap: 4px; margin-bottom: 20px; background: var(--bg-card);
+            border-radius: 16px; padding: 12px 10px 10px 10px; border: 1px solid var(--border-color);
+        }
+        .level-stat-col {
+            flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
+        }
+        .level-stat-bar-track { width: 100%; height: 26px; display: flex; align-items: flex-end; justify-content: center; }
+        .level-stat-bar-fill { width: 55%; border-radius: 3px 3px 0 0; min-height: 3px; transition: height 0.3s ease; opacity: 0.9; }
+        .level-stat-count { font-size: 12px; font-weight: 700; }
+        .level-stat-label { font-size: 9px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.2px; }
+
+        .word-level-pips { display: flex; gap: 2.5px; flex-shrink: 0; }
+        .word-level-pip { width: 5px; height: 16px; border-radius: 2px; background: rgba(255, 255, 255, 0.1); }
+        .word-level-pip.filled { background: linear-gradient(to bottom, var(--accent-primary), var(--accent-secondary)); }
         .stat-box {
             flex: 1; background: var(--bg-card); border-radius: 16px; padding: 16px 8px;
             display: flex; flex-direction: column; align-items: center; gap: 5px;
@@ -118,7 +132,7 @@
         .stat-val { font-size: 22px; font-weight: 700; }
         .stat-lbl { font-size: 11.5px; font-weight: 500; color: var(--text-sub); }
 
-        .action-cards { display: flex; flex-direction: column; gap: 12px; margin-bottom: 26px; }
+        .action-cards { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         .action-card {
             display: flex; align-items: center; gap: 14px; padding: 18px 20px;
             border-radius: 18px; border: none; cursor: pointer; text-align: left;
@@ -137,7 +151,7 @@
         .search-input {
             width: 100%; padding: 14px; background-color: var(--bg-card);
             border: 1px solid var(--border-color); border-radius: 12px; color: white;
-            font-size: 15px; outline: none; margin-bottom: 14px;
+            font-size: 15px; outline: none; margin-bottom: 20px;
         }
         .search-input::placeholder { color: var(--text-muted); }
         .search-input:focus { border-color: var(--accent-primary); }
@@ -251,7 +265,7 @@
             backface-visibility: hidden; -webkit-backface-visibility: hidden;
             background: var(--bg-card); border-radius: 22px; border: 1px solid var(--border-color);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            gap: 12px; padding: 24px 20px; text-align: center;
+            gap: 12px; padding: 24px 20px 58px 20px; text-align: center;
         }
         .flash-face.back { transform: rotateY(180deg); }
 
@@ -263,6 +277,19 @@
 
         .flash-actions { min-height: 96px; display: flex; align-items: center; }
         .flash-actions .flip-btn, .flash-actions .rating-row { width: 100%; }
+
+        .speak-btn {
+            position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+            width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-sub); font-size: 16px; display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.15s ease;
+        }
+        .speak-btn:active { opacity: 0.7; }
+        .speak-btn.is-speaking { opacity: 0.6; }
 
         .rating-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
         .rating-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 4px; border-radius: 14px; border: none; cursor: pointer; font-weight: 700; font-size: 12px; color: white; }
@@ -366,7 +393,7 @@
                 </div>
             </div>
 
-            <div class="level-bar" id="levelBar"></div>
+            <div class="level-stats" id="levelStats"></div>
 
             <div class="action-cards">
                 <button class="action-card" onclick="startSession()">
@@ -478,24 +505,25 @@
             }
         }
 
-        // --- LEVEL-SYSTEM (nach tatsächlichem Intervall in Tagen, nicht nach Wiederholungs-Anzahl -
-        // siehe Analyse der React-Version: reine rep-Anzahl ignoriert den adaptiven Ease-Faktor) ---
+        // --- LEVEL-SYSTEM (nach Anzahl erfolgreicher Wiederholungen) ---
+        // Vorher war das Level an das Tage-Intervall gekoppelt. Problem: eine einzige
+        // "Einfach"-Bewertung setzt das Intervall direkt auf 4 Tage -> das Wort sprang
+        // sofort von Level 1 auf Level 3, ganz ohne Zwischenschritt. Jetzt zählt einfach
+        // die Anzahl erfolgreicher Wiederholungen: jede bestandene Bewertung (Schwer/Gut/
+        // Einfach) hebt das Wort um genau eine Stufe, "Nochmal" setzt auf Level 1 zurück.
         const LEVEL_CONFIG = [
-            { level: 1, label: 'Neu', minInterval: 0, color: '#EF4444' },
-            { level: 2, label: 'Start', minInterval: 2, color: '#F97316' },
-            { level: 3, label: 'Fortg.', minInterval: 4, color: '#3B82F6' },
-            { level: 4, label: 'Vertieft', minInterval: 7, color: '#8B5CF6' },
-            { level: 5, label: 'Meister', minInterval: 15, color: '#22C55E' },
+            { level: 1, label: 'Neu', color: '#EF4444' },
+            { level: 2, label: 'Start', color: '#F97316' },
+            { level: 3, label: 'Fortg.', color: '#3B82F6' },
+            { level: 4, label: 'Vertieft', color: '#8B5CF6' },
+            { level: 5, label: 'Meister', color: '#22C55E' },
         ];
 
         function getWordLevel(vocabId) {
             const p1 = userProgress[`${vocabId}_es-de`];
             const p2 = userProgress[`${vocabId}_de-es`];
-            if (!p1 && !p2) return 1;
-            const maxInterval = Math.max(p1 ? p1.interval : 0, p2 ? p2.interval : 0);
-            let level = 1;
-            LEVEL_CONFIG.forEach(cfg => { if (maxInterval >= cfg.minInterval) level = cfg.level; });
-            return level;
+            const maxReps = Math.max(p1 ? p1.repetitions : 0, p2 ? p2.repetitions : 0);
+            return Math.min(5, maxReps + 1);
         }
 
         // Karten, die seit deutlich länger als ihr Intervall überfällig sind (längere Lernpause),
@@ -560,11 +588,19 @@
             const vocabCountEl = document.getElementById('vocabCountText');
             if (vocabCountEl) vocabCountEl.innerText = `${totalCount} Vokabeln`;
 
-            const bar = document.getElementById('levelBar');
-            bar.innerHTML = LEVEL_CONFIG.map(cfg => {
+            const statsEl = document.getElementById('levelStats');
+            const maxCount = Math.max(1, ...LEVEL_CONFIG.map(cfg => levelCounts[cfg.level] || 0));
+            statsEl.innerHTML = LEVEL_CONFIG.map(cfg => {
                 const count = levelCounts[cfg.level] || 0;
-                const grow = totalCount > 0 ? count : 0.001; // leeres Segment bleibt minimal sichtbar
-                return `<div class="level-bar-seg" style="flex-grow:${grow}; background:${cfg.color}" title="${cfg.label}: ${count}"></div>`;
+                const heightPct = Math.max(count > 0 ? 8 : 3, Math.round((count / maxCount) * 100));
+                return `
+                    <div class="level-stat-col">
+                        <div class="level-stat-bar-track">
+                            <div class="level-stat-bar-fill" style="height:${heightPct}%; background:${cfg.color};"></div>
+                        </div>
+                        <div class="level-stat-count">${count}</div>
+                        <div class="level-stat-label">Lvl ${cfg.level}</div>
+                    </div>`;
             }).join('');
         }
 
@@ -590,10 +626,7 @@
                 return;
             }
 
-            const filtered = activeVocab().filter(v =>
-                v.word.toLowerCase().includes(query) ||
-                v.translation.toLowerCase().includes(query)
-            );
+            const filtered = activeVocab().filter(v => v.word.toLowerCase() === query);
 
             if (filtered.length === 0) {
                 container.innerHTML = `<div class="empty-msg">Keine Vokabeln gefunden.</div>`;
@@ -605,17 +638,17 @@
 
             shown.forEach(v => {
                 ['es-de', 'de-es'].forEach(dir => initProgressForWord(v.id, dir));
-                const p1 = userProgress[`${v.id}_es-de`];
-                const p2 = userProgress[`${v.id}_de-es`];
-                const isNew = p1.state === 'new' && p2.state === 'new';
                 const level = getWordLevel(v.id);
-                const isMastered = level === 5;
 
                 let typeColor = 'var(--accent-primary)';
                 let typeIcon = 'fa-tag';
                 if (v.type === 'Verb') { typeColor = 'var(--verb-color);'; typeIcon = 'fa-bolt'; }
                 else if (v.type === 'Substantiv') { typeColor = 'var(--noun-color);'; typeIcon = 'fa-box'; }
                 else if (v.type === 'Adjektiv') { typeColor = 'var(--adj-color);'; typeIcon = 'fa-star'; }
+
+                const pips = Array.from({ length: 5 }, (_, i) =>
+                    `<div class="word-level-pip${i < level ? ' filled' : ''}"></div>`
+                ).join('');
 
                 const row = document.createElement('div');
                 row.className = 'word-row';
@@ -627,7 +660,7 @@
                         <div class="word-row-name">${v.word} <span style="font-weight:400; color:var(--text-sub); font-size:13px;">(${v.translation})</span></div>
                         <div class="word-row-cat">${v.category}</div>
                     </div>
-                    ${isNew ? `<div class="badge-new">Neu</div>` : (isMastered ? `<div style="color:var(--success); font-size:12px;"><i class="fa-solid fa-check-circle"></i></div>` : `<div style="color:var(--warning); font-size:12px;"><i class="fa-solid fa-clock"></i></div>`)}
+                    <div class="word-level-pips" title="Level ${level}/5">${pips}</div>
                 `;
                 container.appendChild(row);
             });
@@ -662,7 +695,11 @@
             if (rating === 0) {
                 p.interval = 1; p.repetitions = 0; p.state = 'learning';
             } else if (rating === 1) {
-                p.interval = Math.max(1, Math.round(p.interval * 1.2)); p.repetitions += 1; p.state = 'learning';
+                // "Schwer" zählt zwar als bestanden (Karte kommt nicht sofort zurück auf
+                // Stufe 1), erhöht aber bewusst NICHT die Wiederholungs-Anzahl - und damit
+                // auch nicht das Level. Ein Level-Aufstieg soll ein sicheres "Gut"/"Einfach"
+                // widerspiegeln, kein mühsames Erraten.
+                p.interval = Math.max(1, Math.round(p.interval * 1.2)); p.state = 'learning';
             } else if (rating === 2) {
                 if (p.repetitions === 0) p.interval = 1;
                 else if (p.repetitions === 1) p.interval = 6;
@@ -765,7 +802,7 @@
             const total = sessionQueue.length;
             const progressPct = (currentSessionIndex / total) * 100;
             document.getElementById('sessionBarFill').style.width = `${progressPct}%`;
-            document.getElementById('sessionCount').innerText = `${currentSessionIndex + 1}/${total}`;
+            document.getElementById('sessionCount').innerText = `${Math.min(currentSessionIndex + 1, total)}/${total}`;
 
             const container = document.getElementById('sessionContent');
             container.innerHTML = '';
@@ -780,6 +817,47 @@
             else renderQuizStep(step);
         }
 
+        // --- Sprachausgabe (nur spanisches Wort, native Web Speech API - kostenlos, offline-fähig) ---
+        // Stimmen werden einmal zwischengespeichert; Browser laden sie asynchron nach,
+        // daher zusätzlich per 'voiceschanged' aktualisieren.
+        let cachedVoices = [];
+        function refreshVoiceCache() {
+            if (!('speechSynthesis' in window)) return;
+            cachedVoices = window.speechSynthesis.getVoices();
+        }
+        if ('speechSynthesis' in window) {
+            refreshVoiceCache();
+            window.speechSynthesis.onvoiceschanged = refreshVoiceCache;
+        }
+
+        function speakSpanish(text) {
+            if (!('speechSynthesis' in window)) return;
+            const cleanText = text.replace(/<[^>]*>/g, '').split('/')[0].trim();
+            if (!cleanText) return;
+
+            window.speechSynthesis.cancel();
+            // Direkt nach cancel() bleibt speak() in manchen Browsern (v.a. Chrome)
+            // stumm, wenn es sofort danach aufgerufen wird - daher kurze Verzögerung.
+            // WICHTIG: genau EIN speak()-Aufruf pro Klick (vorher liefen teils zwei
+            // parallele Aufrufe für dieselbe Karte, was das Vorlesen unzuverlässig machte).
+            setTimeout(() => {
+                try {
+                    const utterance = new SpeechSynthesisUtterance(cleanText);
+                    utterance.lang = 'es-ES';
+                    utterance.rate = 0.9;
+
+                    const voices = cachedVoices.length ? cachedVoices : window.speechSynthesis.getVoices();
+                    const targetVoice = voices.find(v => v.lang.startsWith('es') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Monica') || v.name.includes('Jorge') || v.name.includes('Paulina') || v.name.includes('Diego')))
+                        || voices.find(v => v.lang.startsWith('es'));
+                    if (targetVoice) utterance.voice = targetVoice;
+
+                    window.speechSynthesis.speak(utterance);
+                } catch (e) {
+                    console.error('Sprachausgabe fehlgeschlagen:', e);
+                }
+            }, 60);
+        }
+
         function renderFlashcardStep(step) {
             const v = step.vocab;
             const isEsDe = step.direction === 'es-de';
@@ -787,6 +865,8 @@
             const highlightedExample = isEsDe ? highlightWordInSentence(exampleSentence, v.word) : exampleSentence;
 
             const container = document.getElementById('sessionContent');
+            const escapedWord = v.word.replace(/'/g, "\\'");
+            const speakBtn = `<button type="button" class="speak-btn" onclick="event.stopPropagation(); speakSpanish('${escapedWord}');" onmousedown="event.stopPropagation();" ontouchstart="event.stopPropagation();" aria-label="Aussprache anhören"><i class="fa-solid fa-microphone"></i></button>`;
             container.innerHTML = `
                 <div class="flash-card-container">
                     <div class="flash-card" id="flashCard" onclick="toggleFlip()">
@@ -797,12 +877,14 @@
                             <div class="flash-word">${isEsDe ? v.word : v.translation}</div>
                             ${isEsDe ? `<div class="flash-context">${highlightedExample}</div>` : ''}
                             <div class="flash-hint"><i class="fa-solid fa-rotate"></i> Karte antippen zum Umdrehen</div>
+                            ${isEsDe ? speakBtn : ''}
                         </div>
                         <div class="flash-face back">
                             <span class="flash-type-tag" style="background:var(--success)20; color:var(--success)">Lösung</span>
                             <div class="flash-word" style="color:var(--success)">${isEsDe ? v.translation : v.word}</div>
                             <div class="flash-context">Ursprünglich: <strong>${isEsDe ? v.word : v.translation}</strong></div>
                             ${!isEsDe ? `<div class="flash-context-small" style="font-style: italic; margin-top:8px; color:var(--text-sub); font-size: 13px;">Bsp: "${exampleSentence}"</div>` : ''}
+                            ${!isEsDe ? speakBtn : ''}
                         </div>
                     </div>
                 </div>
