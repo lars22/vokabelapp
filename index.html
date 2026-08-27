@@ -63,7 +63,7 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            padding: 20px 16px 60px 16px;
+            padding: calc(env(safe-area-inset-top, 0px) + 28px) 16px 60px 16px;
             overflow-x: hidden;
         }
 
@@ -259,6 +259,14 @@
         .settings-action-row { background: none; border: none; width: 100%; text-align: left; font-size: 15px; font-weight: 600; color: var(--accent-primary); cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
         .settings-action-row.destructive { color: #EF4444; }
 
+        .danger-zone-toggle {
+            display: flex; align-items: center; justify-content: space-between;
+            width: 100%; background: none; border: none; padding: 4px 2px;
+            font-size: 12px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer;
+        }
+        .danger-zone-toggle i { color: var(--text-muted); font-size: 12px; transition: transform 0.2s ease; }
+        .danger-zone-toggle.expanded i { transform: rotate(90deg); }
+
         .session-progress-row { display: flex; align-items: center; gap: 10px; }
         .session-bar-track { flex-grow: 1; height: 6px; background: var(--bg-card); border-radius: 999px; overflow: hidden; }
         .session-bar-fill { height: 100%; background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary)); border-radius: 999px; transition: width 0.3s ease; }
@@ -443,17 +451,9 @@
                 <div style="flex: 0 0 70px;"></div>
             </div>
             <div class="modal-body">
-                <div class="info-box">
-                    <i class="fa-solid fa-book-open"></i> <strong>Wortschatz:</strong> <span id="vocabCountText">5113 Vokabeln</span>, jeweils mit Beispielsatz und Kategorie.
-                </div>
-                <div class="info-box">
-                    <i class="fa-solid fa-circle-info"></i> Lernfortschritt wird immer zuerst lokal gespeichert und, sobald du angemeldet und online bist, automatisch mit deinem Konto synchronisiert.
-                </div>
-                <div class="info-box">
-                    <i class="fa-solid fa-graduation-cap"></i> <strong>Lern-Algorithmus:</strong> Nutzt ein robustes Spaced-Repetition-System mit adaptivem Ease-Faktor. Jede Karte wird in zwei Richtungen gelernt (Spanisch ➔ Deutsch und umgekehrt). Lange Lernpausen setzen eine Karte automatisch um eine Stufe zurück.
-                </div>
-                <div class="info-box">
-                    <i class="fa-solid fa-check"></i> Ein Wort gilt als <strong>gemeistert</strong> (Level 5), sobald das Abfrage-Intervall in mindestens einer Richtung 15 Tage erreicht.
+                <div class="info-box" style="font-size: 15px; display: flex; align-items: center; gap: 14px;">
+                    <i class="fa-solid fa-graduation-cap" style="font-size: 22px; flex-shrink: 0;"></i>
+                    <span><strong>Wortschatz</strong>: Lerne über 5000 Vokabeln nach dem Spaced-Repetition-System.</span>
                 </div>
                 <div id="logoutRow" style="display:none; flex-direction:column; gap:12px;">
                     <span class="settings-section-label">Konto</span>
@@ -490,13 +490,18 @@
                     </div>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <span class="form-label" style="color: #EF4444;">GEFAHRENZONE</span>
-                    <button class="delete-btn-full" onclick="handleResetProgress()">
-                        <i class="fa-solid fa-rotate-left"></i> Fortschritt zurücksetzen
+                    <button type="button" class="danger-zone-toggle" id="dangerZoneToggle" onclick="toggleDangerZone()">
+                        <span style="color: #EF4444;">GEFAHRENZONE</span>
+                        <i class="fa-solid fa-chevron-right"></i>
                     </button>
-                    <button class="delete-btn-full" onclick="handleDeleteAccount()">
-                        <i class="fa-solid fa-user-xmark"></i> Konto-Daten löschen
-                    </button>
+                    <div id="dangerZoneContent" style="display:none; flex-direction:column; gap:8px;">
+                        <button class="delete-btn-full" onclick="handleResetProgress()">
+                            <i class="fa-solid fa-rotate-left"></i> Lernfortschritt zurücksetzen
+                        </button>
+                        <button class="delete-btn-full" onclick="handleDeleteAccount()">
+                            <i class="fa-solid fa-user-xmark"></i> Account löschen
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1074,9 +1079,21 @@
             if (emailInput) emailInput.value = currentUser ? (currentUser.email || '') : '';
             const passwordInput = document.getElementById('updatePasswordInput');
             if (passwordInput) passwordInput.value = '';
+            const dangerZoneContent = document.getElementById('dangerZoneContent');
+            if (dangerZoneContent) dangerZoneContent.style.display = 'none';
+            const dangerZoneToggle = document.getElementById('dangerZoneToggle');
+            if (dangerZoneToggle) dangerZoneToggle.classList.remove('expanded');
             document.getElementById('settingsModal').classList.add('active');
         }
         function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
+
+        function toggleDangerZone() {
+            const content = document.getElementById('dangerZoneContent');
+            const toggle = document.getElementById('dangerZoneToggle');
+            const isOpen = content.style.display === 'flex';
+            content.style.display = isOpen ? 'none' : 'flex';
+            toggle.classList.toggle('expanded', !isOpen);
+        }
 
         async function handleResetProgress() {
             if (confirm("Möchtest du wirklich deinen gesamten Lernfortschritt zurücksetzen?")) {
