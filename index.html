@@ -148,18 +148,27 @@
         .action-title { font-size: 17px; font-weight: 700; color: white; }
         .action-desc { font-size: 12.5px; font-weight: 500; color: rgba(255, 255, 255, 0.8); }
 
+        .search-wrap { position: relative; margin-bottom: 20px; }
         .search-input {
-            width: 100%; padding: 14px; background-color: var(--bg-card);
+            width: 100%; padding: 14px 44px 14px 14px; background-color: var(--bg-card);
             border: 1px solid var(--border-color); border-radius: 12px; color: white;
-            font-size: 15px; outline: none; margin-bottom: 20px;
+            font-size: 15px; outline: none;
         }
         .search-input::placeholder { color: var(--text-muted); }
         .search-input:focus { border-color: var(--accent-primary); }
+        .search-clear-btn {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            width: 28px; height: 28px; border-radius: 50%; border: none;
+            background: rgba(255, 255, 255, 0.08); color: var(--text-sub);
+            font-size: 12px; display: none; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
 
         .word-list { display: flex; flex-direction: column; gap: 8px; }
         .word-row {
             display: flex; align-items: center; gap: 12px; background: var(--bg-card);
             border-radius: 14px; padding: 12px 14px; border: 1px solid var(--border-color);
+            cursor: pointer;
         }
         .word-type-dot {
             width: 34px; height: 34px; border-radius: 10px; display: flex;
@@ -237,6 +246,18 @@
         }
         .info-box { background: var(--bg-card); border-radius: 14px; padding: 14px 16px; font-size: 13px; color: var(--text-sub); line-height: 1.5; }
         .form-label { font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; }
+
+        /* KONTO-VERWALTUNG (E-Mail/Passwort ändern, Konto löschen) — wie im Habit-Tracker */
+        .settings-section-label { font-size: 12px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; padding: 0 4px; margin-bottom: -8px; }
+        .settings-group { background: var(--bg-card); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+        .settings-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-row-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #ffffff; flex-shrink: 0; }
+        .settings-row-body { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; }
+        .settings-row-label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+        .settings-row .form-input { padding: 0; background: none; border: none; font-size: 16px; font-weight: 500; }
+        .settings-action-row { background: none; border: none; width: 100%; text-align: left; font-size: 15px; font-weight: 600; color: var(--accent-primary); cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+        .settings-action-row.destructive { color: #EF4444; }
 
         .session-progress-row { display: flex; align-items: center; gap: 10px; }
         .session-bar-track { flex-grow: 1; height: 6px; background: var(--bg-card); border-radius: 999px; overflow: hidden; }
@@ -350,7 +371,7 @@
 
         <!-- LOGIN / REGISTER: nur relevant, sobald SUPABASE_URL unten konfiguriert ist -->
         <div id="authScreen" style="display: none;">
-            <h1 style="text-align: center; margin-bottom: 8px;">Vokabeln</h1>
+            <h1 style="text-align: center; margin-bottom: 8px;">Vocably</h1>
             <div class="auth-card">
                 <h2 class="auth-title" id="authTitle">Registrieren</h2>
                 <div id="authMessage" class="auth-message"></div>
@@ -364,17 +385,13 @@
                 </div>
                 <button class="btn-primary bouncy" id="authSubmitBtn" onclick="handleAuthSubmit()">Konto erstellen</button>
                 <button class="auth-toggle-btn" id="authToggleBtn" onclick="toggleAuthMode()">Schon ein Konto? Anmelden</button>
-                <button class="auth-toggle-btn" onclick="showApp()">Ohne Konto weiter (nur lokal)</button>
             </div>
         </div>
 
         <!-- HAUPT-APP -->
         <div id="mainScreen" style="display: none;">
             <header>
-                <div>
-                    <h1>Vokabeln</h1>
-                    <div class="sub" id="headerSub">0/0 gelernt</div>
-                </div>
+                <h1>Vocably</h1>
                 <button class="icon-btn-round bouncy" onclick="openSettings()"><i class="fa-solid fa-bars"></i></button>
             </header>
 
@@ -400,13 +417,16 @@
                     <div class="action-icon"><i class="fa-solid fa-book"></i></div>
                     <div class="action-text">
                         <span class="action-title">Lernen starten</span>
-                        <span class="action-desc" id="learnDesc">Karteikarten + Satz-Quiz</span>
+                        <span class="action-desc" id="learnDesc">Lerne über 5000 spanische Vokabeln</span>
                     </div>
                 </button>
             </div>
 
             <!-- Suchfeld -->
-            <input type="text" id="searchInput" class="search-input" placeholder="Nach Vokabel suchen…" oninput="renderWordList()">
+            <div class="search-wrap">
+                <input type="text" id="searchInput" class="search-input" placeholder="Nach Vokabel suchen…" oninput="renderWordList()">
+                <button type="button" class="search-clear-btn bouncy" id="searchClearBtn" onclick="clearSearch()" aria-label="Suche löschen"><i class="fa-solid fa-xmark"></i></button>
+            </div>
 
             <!-- Vokabelliste Container -->
             <div class="word-list" id="wordListContainer"></div>
@@ -419,7 +439,7 @@
             <div class="modal-handle-wrap"><div class="modal-handle"></div></div>
             <div class="modal-header">
                 <button class="modal-close-btn bouncy" onclick="closeModal('settingsModal')">Schließen</button>
-                <h2>Menü</h2>
+                <h2></h2>
                 <div style="flex: 0 0 70px;"></div>
             </div>
             <div class="modal-body">
@@ -435,15 +455,47 @@
                 <div class="info-box">
                     <i class="fa-solid fa-check"></i> Ein Wort gilt als <strong>gemeistert</strong> (Level 5), sobald das Abfrage-Intervall in mindestens einer Richtung 15 Tage erreicht.
                 </div>
-                <div id="logoutRow" style="display:none; flex-direction:column; gap:8px;">
-                    <button class="modal-close-btn bouncy" style="width:100%;" onclick="closeModal('settingsModal'); handleLogout();">
-                        <i class="fa-solid fa-right-from-bracket"></i>&nbsp; Abmelden
-                    </button>
+                <div id="logoutRow" style="display:none; flex-direction:column; gap:12px;">
+                    <span class="settings-section-label">Konto</span>
+                    <div class="settings-group">
+                        <div class="settings-row">
+                            <div class="settings-row-icon" style="background: var(--accent-primary);"><i class="fa-solid fa-envelope"></i></div>
+                            <div class="settings-row-body">
+                                <span class="settings-row-label">NEUE E-MAIL</span>
+                                <input type="email" id="updateEmailInput" class="form-input" placeholder="neue@email.de">
+                            </div>
+                        </div>
+                        <button class="settings-row settings-action-row" onclick="handleUpdateEmail()">
+                            <span>E-Mail aktualisieren</span>
+                        </button>
+                    </div>
+                    <div class="settings-group">
+                        <div class="settings-row">
+                            <div class="settings-row-icon" style="background: var(--accent-secondary);"><i class="fa-solid fa-lock"></i></div>
+                            <div class="settings-row-body">
+                                <span class="settings-row-label">NEUES PASSWORT</span>
+                                <input type="password" id="updatePasswordInput" class="form-input" placeholder="mind. 6 Zeichen">
+                            </div>
+                        </div>
+                        <button class="settings-row settings-action-row" onclick="handleUpdatePassword()">
+                            <span>Passwort aktualisieren</span>
+                        </button>
+                    </div>
+                    <div id="accountMsg" class="auth-message"></div>
+                    <div class="settings-group">
+                        <button class="settings-row settings-action-row" onclick="closeModal('settingsModal'); handleLogout();">
+                            <span><i class="fa-solid fa-right-from-bracket" style="width: 20px;"></i> Abmelden</span>
+                            <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 12px;"></i>
+                        </button>
+                    </div>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
                     <span class="form-label" style="color: #EF4444;">GEFAHRENZONE</span>
                     <button class="delete-btn-full" onclick="handleResetProgress()">
                         <i class="fa-solid fa-rotate-left"></i> Fortschritt zurücksetzen
+                    </button>
+                    <button class="delete-btn-full" onclick="handleDeleteAccount()">
+                        <i class="fa-solid fa-user-xmark"></i> Konto-Daten löschen
                     </button>
                 </div>
             </div>
@@ -456,7 +508,7 @@
             <div class="modal-handle-wrap"><div class="modal-handle"></div></div>
             <div class="modal-header">
                 <button class="modal-close-btn bouncy" onclick="closeSession()">Beenden</button>
-                <h2 id="sessionTitle">Lernen</h2>
+                <h2 id="sessionTitle"></h2>
                 <div style="flex: 0 0 70px;"></div>
             </div>
             <div class="modal-body">
@@ -485,6 +537,7 @@
         let userProgress = JSON.parse(localStorage.getItem('vocab_progress_v2') || '{}');
         let sessionQueue = [];
         let currentSessionIndex = 0;
+        let sessionCorrectCount = 0;
 
         function getTodayTimestamp() {
             const d = new Date();
@@ -583,8 +636,7 @@
             document.getElementById('statDue').innerText = dueCount;
             document.getElementById('statLearned').innerText = masteredCount;
             document.getElementById('statStreak').innerText = localStorage.getItem('vocab_streak') || '1';
-            document.getElementById('headerSub').innerText = `${masteredCount}/${totalCount} gemeistert`;
-            document.getElementById('learnDesc').innerText = dueCount > 0 ? `${dueCount} Wiederholungen fällig` : `Alle fällig! Gemischtes Training`;
+            document.getElementById('learnDesc').innerText = dueCount > 0 ? `${dueCount} Wiederholungen fällig` : `Lerne über 5000 spanische Vokabeln`;
             const vocabCountEl = document.getElementById('vocabCountText');
             if (vocabCountEl) vocabCountEl.innerText = `${totalCount} Vokabeln`;
 
@@ -604,6 +656,28 @@
             }).join('');
         }
 
+        // Ein Icon + eine Farbe pro Wortart, damit man Kategorien auf einen Blick
+        // unterscheiden kann (nicht nur eine Info-Grau-in-Grau-Farbfläche).
+        const TYPE_STYLES = {
+            'Verb': { color: '#6CB8E6', icon: 'fa-bolt' },
+            'Substantiv': { color: '#F0A25D', icon: 'fa-box' },
+            'Adjektiv': { color: '#7BC896', icon: 'fa-star' },
+            'Pronomen': { color: '#C084FC', icon: 'fa-user' },
+            'Präposition': { color: '#22D3EE', icon: 'fa-arrow-right-arrow-left' },
+            'Adverb': { color: '#FBBF24', icon: 'fa-gauge-high' },
+            'Konjunktion': { color: '#F472B6', icon: 'fa-link' },
+            'Ausruf': { color: '#FB7185', icon: 'fa-exclamation' },
+            'Phrasen': { color: '#5EEAD4', icon: 'fa-comment-dots' },
+        };
+        const DEFAULT_TYPE_STYLE = { color: '#94A3B8', icon: 'fa-tag' };
+
+        function clearSearch() {
+            const input = document.getElementById('searchInput');
+            input.value = '';
+            renderWordList();
+            input.focus();
+        }
+
         function highlightWordInSentence(sentence, word) {
             const cleanWord = word.split('/')[0].trim();
             const regex = new RegExp(`(${cleanWord})`, 'gi');
@@ -616,15 +690,11 @@
             const container = document.getElementById('wordListContainer');
             container.innerHTML = '';
 
-            // Wenn das Suchfeld leer ist, zeige Hinweis anstatt der ganzen Liste
-            if (query === '') {
-                container.innerHTML = `
-                    <div class="empty-msg">
-                        <i class="fa-solid fa-magnifying-glass" style="font-size: 24px; margin-bottom: 12px; opacity: 0.5;"></i><br>
-                        Tippe oben eine Vokabel ein,<br>um sie hier zu suchen.
-                    </div>`;
-                return;
-            }
+            const clearBtn = document.getElementById('searchClearBtn');
+            if (clearBtn) clearBtn.style.display = query === '' ? 'none' : 'flex';
+
+            // Wenn das Suchfeld leer ist, bleibt die Liste einfach leer
+            if (query === '') return;
 
             const filtered = activeVocab().filter(v => v.word.toLowerCase() === query);
 
@@ -639,12 +709,7 @@
             shown.forEach(v => {
                 ['es-de', 'de-es'].forEach(dir => initProgressForWord(v.id, dir));
                 const level = getWordLevel(v.id);
-
-                let typeColor = 'var(--accent-primary)';
-                let typeIcon = 'fa-tag';
-                if (v.type === 'Verb') { typeColor = 'var(--verb-color);'; typeIcon = 'fa-bolt'; }
-                else if (v.type === 'Substantiv') { typeColor = 'var(--noun-color);'; typeIcon = 'fa-box'; }
-                else if (v.type === 'Adjektiv') { typeColor = 'var(--adj-color);'; typeIcon = 'fa-star'; }
+                const style = TYPE_STYLES[v.type] || DEFAULT_TYPE_STYLE;
 
                 const pips = Array.from({ length: 5 }, (_, i) =>
                     `<div class="word-level-pip${i < level ? ' filled' : ''}"></div>`
@@ -652,9 +717,10 @@
 
                 const row = document.createElement('div');
                 row.className = 'word-row';
+                row.onclick = () => openWordFlashcard(v.id);
                 row.innerHTML = `
-                    <div class="word-type-dot" style="background: ${typeColor}15; color: ${typeColor}">
-                        <i class="fa-solid ${typeIcon}"></i>
+                    <div class="word-type-dot" style="background: ${style.color}26; color: ${style.color}">
+                        <i class="fa-solid ${style.icon}"></i>
                     </div>
                     <div class="word-row-info">
                         <div class="word-row-name">${v.word} <span style="font-weight:400; color:var(--text-sub); font-size:13px;">(${v.translation})</span></div>
@@ -788,6 +854,20 @@
             });
 
             currentSessionIndex = 0;
+            sessionCorrectCount = 0;
+            document.getElementById('sessionModal').classList.add('active');
+            renderSessionStep();
+        }
+
+        // Öffnet eine einzelne Karteikarte direkt aus dem Suchergebnis heraus,
+        // ohne den regulären Fälligkeits-Ablauf von startSession() zu durchlaufen.
+        function openWordFlashcard(vocabId) {
+            const v = activeVocab().find(item => item.id === vocabId);
+            if (!v) return;
+            initProgressForWord(v.id, 'es-de');
+            sessionQueue = [{ type: 'flashcard', vocab: v, direction: 'es-de' }];
+            currentSessionIndex = 0;
+            sessionCorrectCount = 0;
             document.getElementById('sessionModal').classList.add('active');
             renderSessionStep();
         }
@@ -916,6 +996,7 @@
 
         function handleRating(wordId, direction, rating) {
             updateCardInterval(parseInt(wordId), direction, rating);
+            if (rating > 0) sessionCorrectCount++;
             currentSessionIndex++;
             renderSessionStep();
         }
@@ -955,7 +1036,8 @@
 
             if (selected === correct) {
                 btn.classList.add('correct');
-                updateCardInterval(parseInt(wordId), 'es-de', 2); 
+                updateCardInterval(parseInt(wordId), 'es-de', 2);
+                sessionCorrectCount++;
             } else {
                 btn.classList.add('wrong');
                 options.forEach(o => {
@@ -973,18 +1055,27 @@
         function renderSessionDone() {
             document.getElementById('sessionBarFill').style.width = `100%`;
             const container = document.getElementById('sessionContent');
+            const wordLabel = sessionCorrectCount === 1 ? 'Vokabel' : 'Vokabeln';
             container.innerHTML = `
                 <div class="session-done">
                     <i class="fa-solid fa-circle-check"></i>
                     <h3>Session beendet!</h3>
-                    <p>Großartig mitgedacht! Du hast deine Vokabeln erfolgreich trainiert.</p>
+                    <p>Großartig! Du hast ${sessionCorrectCount} ${wordLabel} erfolgreich gelernt!</p>
                     <button class="next-btn" onclick="closeSession()">Fertig</button>
                 </div>
             `;
         }
 
         // --- MENÜ / SETTINGS ---
-        function openSettings() { document.getElementById('settingsModal').classList.add('active'); }
+        function openSettings() {
+            const accountMsg = document.getElementById('accountMsg');
+            if (accountMsg) accountMsg.style.display = 'none';
+            const emailInput = document.getElementById('updateEmailInput');
+            if (emailInput) emailInput.value = currentUser ? (currentUser.email || '') : '';
+            const passwordInput = document.getElementById('updatePasswordInput');
+            if (passwordInput) passwordInput.value = '';
+            document.getElementById('settingsModal').classList.add('active');
+        }
         function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
 
         async function handleResetProgress() {
@@ -1000,6 +1091,66 @@
                     await supabaseClient.from('vocab_progress').delete().eq('user_id', currentUser.id);
                 }
                 alert("Fortschritt wurde zurückgesetzt.");
+            }
+        }
+
+        // --- KONTO-VERWALTUNG (wie im Habit-Tracker) ---
+        async function handleUpdateEmail() {
+            const newEmail = document.getElementById('updateEmailInput').value.trim();
+            const msgBox = document.getElementById('accountMsg');
+            if (!newEmail) return;
+
+            const { error } = await supabaseClient.auth.updateUser({ email: newEmail });
+            msgBox.style.display = 'block';
+            if (error) {
+                msgBox.className = 'auth-message error';
+                msgBox.innerText = 'Fehler: ' + error.message;
+            } else {
+                msgBox.className = 'auth-message success';
+                msgBox.innerText = 'Bestätigungslink an deine neue E-Mail-Adresse gesendet!';
+            }
+        }
+
+        async function handleUpdatePassword() {
+            const newPassword = document.getElementById('updatePasswordInput').value.trim();
+            const msgBox = document.getElementById('accountMsg');
+
+            if (!newPassword || newPassword.length < 6) {
+                msgBox.style.display = 'block';
+                msgBox.className = 'auth-message error';
+                msgBox.innerText = 'Passwort muss mindestens 6 Zeichen lang sein.';
+                return;
+            }
+
+            const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+            msgBox.style.display = 'block';
+            if (error) {
+                msgBox.className = 'auth-message error';
+                msgBox.innerText = 'Fehler: ' + error.message;
+            } else {
+                msgBox.className = 'auth-message success';
+                msgBox.innerText = 'Passwort erfolgreich aktualisiert!';
+                document.getElementById('updatePasswordInput').value = '';
+            }
+        }
+
+        async function handleDeleteAccount() {
+            if (!confirm("Möchtest du wirklich deine Konto-Daten löschen? Dein gesamter Lernfortschritt geht dabei unwiderruflich verloren.")) return;
+
+            try {
+                if (currentUser) {
+                    await supabaseClient.from('vocab_progress').delete().eq('user_id', currentUser.id);
+                }
+                localStorage.removeItem('vocab_progress_v2');
+                localStorage.removeItem('vocab_sync_queue');
+                userProgress = {};
+
+                closeModal('settingsModal');
+                await handleLogout();
+
+                alert("Deine Konto-Daten wurden erfolgreich gelöscht.");
+            } catch (err) {
+                alert("Beim Löschen deiner Daten ist ein Fehler aufgetreten: " + err.message);
             }
         }
 
@@ -1066,8 +1217,8 @@
         // Trage hier dieselbe URL/Key wie in deiner Habit-Tracker-App ein
         // (Projekt-Einstellungen -> API), dort dann zusätzlich die Tabelle
         // "vocab_progress" gemäß dem beigelegten SQL-Schema anlegen.
-        const SUPABASE_URL = "DEINE_SUPABASE_URL";
-        const SUPABASE_ANON_KEY = "DEIN_SUPABASE_ANON_KEY";
+        const SUPABASE_URL = "https://vchuexyohoclqzhlncin.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_zHv9WXn1ygkqHZFZvvvW6Q_yjsNzJux";
         const supabaseClient = (SUPABASE_URL.startsWith("http"))
             ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
             : null;
