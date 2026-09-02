@@ -3,7 +3,7 @@
 // startet. Die eigentlichen Lerndaten laufen weiterhin über localStorage +
 // die Supabase-Sync-Queue in index.html – das hier ist nur die "App-Hülle".
 
-const CACHE_NAME = 'vokabeln-shell-v4';
+const CACHE_NAME = 'vokabeln-shell-v5';
 
 // Alles, was für den reinen App-Start nötig ist. Bei Änderungen an diesen
 // Dateien einfach CACHE_NAME hochzählen (z. B. -v5), damit der Browser
