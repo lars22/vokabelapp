@@ -3,17 +3,22 @@
 // startet. Die eigentlichen Lerndaten laufen weiterhin über localStorage +
 // die Supabase-Sync-Queue in index.html – das hier ist nur die "App-Hülle".
 
-const CACHE_NAME = 'vokabeln-shell-v5';
+const CACHE_NAME = 'vokabeln-shell-v6';
 
 // Alles, was für den reinen App-Start nötig ist. Bei Änderungen an diesen
-// Dateien einfach CACHE_NAME hochzählen (z. B. -v5), damit der Browser
+// Dateien einfach CACHE_NAME hochzählen (z. B. -v7), damit der Browser
 // den neuen Stand nachlädt statt den alten Cache weiterzuverwenden.
+// Alle Sprachpakete stehen hier, damit ein Sprachwechsel auch offline
+// funktioniert, selbst wenn diese Sprache noch nie aktiv genutzt wurde.
 const APP_SHELL = [
   './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png',
+  './vocab-es.js',
+  './vocab-fr.js',
+  './vocab-it.js',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ];
